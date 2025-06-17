@@ -93,4 +93,50 @@ st.download_button(
 st.subheader("🔮 Climate Forecasting (using NumPy)")
 
 climate_vars = ['temperature', 'humidity', 'precipitation']
-available_vars = [col]()_
+available_vars = [col for col in climate_vars if col in df.columns]
+
+if not available_vars:
+    st.warning("⚠️ No forecastable variables ('temperature', 'humidity', 'precipitation') found in dataset.")
+    st.stop()
+
+forecast_var = st.selectbox("Select variable to forecast", available_vars)
+forecast_country = st.selectbox("Select country for forecast", sorted(df['country'].unique()))
+future_year = st.slider("Select future year to forecast to", max_year + 1, max_year + 20, max_year + 5)
+
+df_country = df[df['country'] == forecast_country].dropna(subset=[forecast_var])
+df_train = df_country.groupby('year')[forecast_var].mean().reset_index()
+
+years = df_train['year'].values
+values = df_train[forecast_var].values
+
+if len(years) >= 2:
+    coeffs = np.polyfit(years, values, 1)  # Linear regression: y = mx + b
+    m, b = coeffs
+
+    future_years = np.arange(min(years), future_year + 1)
+    future_preds = m * future_years + b
+
+    df_forecast = pd.DataFrame({
+        'year': future_years,
+        f'forecast_{forecast_var}': future_preds
+    })
+
+    st.line_chart(df_forecast.set_index('year'))
+
+    forecast_csv = df_forecast.to_csv(index=False)
+    st.download_button(
+        label="📤 Download Forecasted Data",
+        data=forecast_csv,
+        file_name=f'forecast_{forecast_country}_{forecast_var}.csv',
+        mime='text/csv'
+    )
+else:
+    st.warning("⚠️ Not enough data points for forecasting.")
+
+# ----------------------------
+# Footer
+# ----------------------------
+st.markdown("""
+---
+🛰️ Built with Streamlit and NumPy. For more accurate forecasting, consider using libraries like `Prophet` or `statsmodels`.
+""")
