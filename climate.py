@@ -55,11 +55,6 @@ df.dropna(subset=['date', 'year'], inplace=True)
 # Sidebar Filters
 # ----------------------------
 st.sidebar.header("🔎 Filter Data")
-
-if 'country' not in df.columns:
-    st.error("❌ Dataset must contain a 'country' column.")
-    st.stop()
-
 countries = df['country'].dropna().unique()
 selected_countries = st.sidebar.multiselect("Select Countries", sorted(countries), default=list(countries[:3]))
 
@@ -70,4 +65,32 @@ year_range = st.sidebar.slider("Select Year Range", min_year, max_year, (min_yea
 df_filtered = df[
     (df['country'].isin(selected_countries)) &
     (df['year'] >= year_range[0]) &
-    (df['year'] <= year_range_
+    (df['year'] <= year_range[1])
+]
+
+# ----------------------------
+# Summary Statistics
+# ----------------------------
+st.subheader("📊 Summary Statistics")
+with st.expander("Show Summary Table"):
+    st.write(df_filtered.describe(include='all'))
+
+# ----------------------------
+# Download Filtered Data
+# ----------------------------
+st.subheader("⬇️ Download Filtered Data")
+csv = df_filtered.to_csv(index=False)
+st.download_button(
+    label="📥 Download Filtered CSV",
+    data=csv,
+    file_name='filtered_climate_data.csv',
+    mime='text/csv'
+)
+
+# ----------------------------
+# Forecasting (No ML Library)
+# ----------------------------
+st.subheader("🔮 Climate Forecasting (using NumPy)")
+
+climate_vars = ['temperature', 'humidity', 'precipitation']
+available_vars = [col]()_
